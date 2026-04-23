@@ -98,11 +98,11 @@ export default function Onboarding() {
       const profileData = {
         id: session.user.id,
         name: formData.name,
-        goals_short_term: formData.shortTermGoals,
-        goals_long_term: formData.longTermGoals,
-        challenges_current: formData.challenges,
-        baseline_emotional: formData.emotionalBaseline,
-        style_mentor: formData.mentorStyle,
+        short_term_goals: formData.shortTermGoals,
+        long_term_goals: formData.longTermGoals,
+        current_challenges: formData.challenges,
+        emotional_baseline: formData.emotionalBaseline,
+        mentor_style: formData.mentorStyle,
       };
 
       console.log("Upserting profile:", profileData);
