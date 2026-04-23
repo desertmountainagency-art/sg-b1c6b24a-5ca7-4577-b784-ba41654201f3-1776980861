@@ -76,19 +76,25 @@ export default function Onboarding() {
     setLoading(true);
 
     try {
-      const { error: updateError } = await supabase
+      // Use UPSERT to handle both insert and update cases
+      const { error: upsertError } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: userId,
           name: formData.name,
           short_term_goals: formData.shortTermGoals,
           long_term_goals: formData.longTermGoals,
           current_challenges: formData.challenges,
           emotional_baseline: formData.emotionalBaseline,
           mentor_style: formData.mentorStyle,
-        })
-        .eq("id", userId);
+        }, {
+          onConflict: "id"
+        });
 
-      if (updateError) throw updateError;
+      if (upsertError) {
+        console.error("Profile upsert error:", upsertError);
+        throw upsertError;
+      }
 
       const { error: conversationError } = await supabase
         .from("conversations")
@@ -99,10 +105,14 @@ export default function Onboarding() {
         .select()
         .single();
 
-      if (conversationError) throw conversationError;
+      if (conversationError) {
+        console.error("Conversation insert error:", conversationError);
+        throw conversationError;
+      }
 
       router.push("/chat");
     } catch (err) {
+      console.error("Full error object:", err);
       setError(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
       setLoading(false);
