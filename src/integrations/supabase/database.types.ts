@@ -137,6 +137,30 @@ export type Database = {
           },
         ]
       }
+      profile_instructions: {
+        Row: {
+          created_at: string | null
+          id: string
+          instruction_type: string
+          order_sequence: number
+          prompt_template: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instruction_type: string
+          order_sequence: number
+          prompt_template: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instruction_type?: string
+          order_sequence?: number
+          prompt_template?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -145,10 +169,12 @@ export type Database = {
           email: string | null
           emotional_baseline: string | null
           full_name: string | null
+          future_self_profile: string | null
           id: string
           long_term_goals: string | null
           mentor_style: string | null
           name: string | null
+          profile_generation_stage: string | null
           short_term_goals: string | null
           updated_at: string | null
         }
@@ -159,10 +185,12 @@ export type Database = {
           email?: string | null
           emotional_baseline?: string | null
           full_name?: string | null
+          future_self_profile?: string | null
           id: string
           long_term_goals?: string | null
           mentor_style?: string | null
           name?: string | null
+          profile_generation_stage?: string | null
           short_term_goals?: string | null
           updated_at?: string | null
         }
@@ -173,10 +201,12 @@ export type Database = {
           email?: string | null
           emotional_baseline?: string | null
           full_name?: string | null
+          future_self_profile?: string | null
           id?: string
           long_term_goals?: string | null
           mentor_style?: string | null
           name?: string | null
+          profile_generation_stage?: string | null
           short_term_goals?: string | null
           updated_at?: string | null
         }
