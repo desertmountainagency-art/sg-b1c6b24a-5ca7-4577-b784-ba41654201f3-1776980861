@@ -1,22 +1,21 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/router";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export function Header() {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+      setUser(session?.user ?? null);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -24,39 +23,49 @@ export function Header() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push("/");
+    window.location.href = "/";
   };
 
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-serif font-semibold text-primary">
-            Soul Mentor
-          </span>
-        </Link>
+    <header className="border-b border-outline-variant/30 bg-surface">
+      <div className="container py-6">
+        <nav className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-semibold">∞</span>
+            </div>
+            <span className="font-serif text-xl text-foreground tracking-tight">
+              Soul Mentor
+            </span>
+          </Link>
 
-        <nav className="flex items-center gap-4">
-          {isAuthenticated ? (
+          {user ? (
             <>
-              <Link href="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
-              </Link>
-              <Link href="/chat">
-                <Button variant="ghost">Chat</Button>
-              </Link>
-              <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
-              </Button>
+              <div className="flex items-center gap-4">
+                <Link href="/chat">
+                  <Button variant="ghost" className="ui-sm">
+                    Conversations
+                  </Button>
+                </Link>
+                <Button variant="ghost" onClick={handleSignOut} className="ui-sm">
+                  Sign Out
+                </Button>
+              </div>
             </>
           ) : (
             <>
-              <Link href="/auth/signin">
-                <Button variant="ghost">Sign In</Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button>Get Started</Button>
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/auth/signin">
+                  <Button variant="ghost" className="ui-sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button className="ui-sm">
+                    Begin
+                  </Button>
+                </Link>
+              </div>
             </>
           )}
         </nav>

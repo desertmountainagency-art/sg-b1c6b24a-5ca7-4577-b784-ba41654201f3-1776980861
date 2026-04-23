@@ -1,65 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;600;700&family=Manrope:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
 @layer base {
   :root {
-    --radius: 0.75rem;
-    --background: 45 20% 96%;
-    --foreground: 180 10% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 180 10% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 180 10% 15%;
-    --primary: 142 45% 45%;
+    /* Primary (Deep Forest Green) - Future Self identity */
+    --primary: 142 45% 11%;           /* #18241b */
     --primary-foreground: 0 0% 100%;
-    --secondary: 142 30% 65%;
-    --secondary-foreground: 180 10% 15%;
-    --muted: 45 15% 88%;
-    --muted-foreground: 180 10% 45%;
-    --accent: 28 80% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
+    --primary-container: 142 25% 20%; /* #2d3930 */
+    --on-primary-container: 142 15% 60%; /* #95a397 */
+    
+    /* Secondary (Muted Ochre) - Accent & insights */
+    --secondary: 36 84% 27%;          /* #7b580d */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 42 98% 73%; /* #fdcd79 */
+    --on-secondary-container: 36 88% 25%; /* #785509 */
+    
+    /* Tertiary (Warm Bone) - Primary background */
+    --tertiary: 60 20% 12%;           /* #21211d */
+    --tertiary-foreground: 0 0% 100%;
+    --tertiary-container: 60 7% 21%;  /* #363632 */
+    --on-tertiary-container: 60 4% 62%; /* #a19f99 */
+    
+    /* Background & Surface (Warm Bone shades) */
+    --background: 40 56% 98%;         /* #fcf9f5 */
+    --foreground: 60 7% 11%;          /* #1c1c1a */
+    
+    --surface: 40 56% 98%;            /* #fcf9f5 */
+    --surface-dim: 40 9% 83%;         /* #dcdad6 */
+    --surface-bright: 40 56% 98%;
+    --on-surface: 60 7% 11%;
+    --on-surface-variant: 120 4% 26%; /* #434843 */
+    
+    /* Container surfaces (subtle tonal layers) */
+    --surface-container-lowest: 0 0% 100%;  /* #ffffff */
+    --surface-container-low: 40 29% 95%;    /* #f6f3ef */
+    --surface-container: 40 20% 93%;        /* #f0ede9 */
+    --surface-container-high: 40 13% 91%;   /* #eae8e4 */
+    --surface-container-highest: 40 11% 89%; /* #e5e2de */
+    
+    /* Borders & Outlines (Warm Gray) */
+    --border: 120 5% 74%;             /* #c3c8c2 */
+    --outline: 120 4% 46%;            /* #747873 */
+    --outline-variant: 120 5% 74%;
+    
+    /* Utility colors */
+    --card: 0 0% 100%;
+    --card-foreground: 60 7% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 7% 11%;
+    
+    --muted: 40 29% 95%;              /* #f6f3ef */
+    --muted-foreground: 120 4% 26%;
+    
+    --accent: 42 98% 73%;             /* #fdcd79 - Ochre highlight */
+    --accent-foreground: 36 88% 25%;
+    
+    --destructive: 0 72% 41%;         /* #ba1a1a */
     --destructive-foreground: 0 0% 100%;
-    --border: 45 10% 85%;
-    --input: 45 10% 85%;
-    --ring: 142 45% 45%;
-    --chart-1: 142 45% 45%;
-    --chart-2: 142 30% 65%;
-    --chart-3: 28 80% 52%;
-    --chart-4: 45 15% 88%;
-    --chart-5: 180 10% 15%;
-  }
-
-  .dark {
-    --radius: 0.75rem;
-    --background: 180 10% 10%;
-    --foreground: 45 20% 96%;
-    --card: 180 10% 15%;
-    --card-foreground: 45 20% 96%;
-    --popover: 180 10% 15%;
-    --popover-foreground: 45 20% 96%;
-    --primary: 142 45% 55%;
-    --primary-foreground: 180 10% 10%;
-    --secondary: 142 30% 45%;
-    --secondary-foreground: 45 20% 96%;
-    --muted: 180 10% 20%;
-    --muted-foreground: 45 15% 70%;
-    --accent: 28 80% 60%;
-    --accent-foreground: 180 10% 10%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 180 10% 25%;
-    --input: 180 10% 25%;
-    --ring: 142 45% 55%;
+    
+    --input: 120 5% 74%;
+    --ring: 142 45% 11%;
+    
+    --radius: 0.5rem; /* 8px default */
   }
 }
 
@@ -67,16 +72,153 @@
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Mentor Voice Typography - Noto Serif */
+  .mentor-voice-lg {
+    font-family: 'Noto Serif', Georgia, serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+
+  .mentor-voice-md {
+    font-family: 'Noto Serif', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+
+  /* User Interface Typography - Manrope */
+  .ui-md {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  .ui-sm {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  .label-caps {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    font-family: 'Noto Serif', Georgia, serif;
+    font-weight: 400;
+  }
+
+  /* Ambient shadow with forest green tint */
+  .shadow-ambient {
+    box-shadow: 0 2px 16px rgba(24, 36, 27, 0.05);
+  }
+
+  .shadow-ambient-lg {
+    box-shadow: 0 4px 24px rgba(24, 36, 27, 0.08);
   }
 }
 
 @layer components {
   .container {
-    @apply mx-auto px-4 md:px-6 lg:px-8 max-w-7xl w-full;
+    @apply mx-auto px-8 max-w-5xl w-full;
+  }
+
+  /* Editorial container for content */
+  .editorial-container {
+    @apply mx-auto px-8 max-w-3xl w-full;
+  }
+
+  /* Message bubble for mentor */
+  .message-mentor {
+    @apply mentor-voice-md text-foreground p-6 rounded-xl bg-surface-container shadow-ambient;
+  }
+
+  /* Message bubble for user */
+  .message-user {
+    @apply ui-md text-on-primary-container bg-primary-container p-4 rounded-xl;
+  }
+
+  /* Reflection card */
+  .reflection-card {
+    @apply bg-card rounded-2xl p-8 shadow-ambient-lg border border-border/50;
+  }
+
+  /* Input field - soft underline style */
+  .input-journal {
+    @apply bg-transparent border-0 border-b-2 border-outline-variant focus:border-primary rounded-none px-0 py-2;
+  }
+}
+
+@layer utilities {
+  /* Spacing utilities following 8px unit */
+  .gap-unit {
+    gap: 8px;
+  }
+  
+  .gap-element {
+    gap: 24px;
+  }
+  
+  .my-section {
+    margin-top: 64px;
+    margin-bottom: 64px;
+  }
+  
+  .p-container {
+    padding: 32px;
+  }
+
+  /* Animation utilities */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  @keyframes breath {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scaleY(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scaleY(1.2);
+    }
+  }
+
+  .animate-breath {
+    animation: breath 3s ease-in-out infinite;
   }
 }
