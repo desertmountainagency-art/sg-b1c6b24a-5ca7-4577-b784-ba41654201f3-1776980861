@@ -64,7 +64,7 @@ export default function Chat() {
         const conv = conversations[0];
         setConversationId(conv.id);
         const msgs = await getConversationMessages(conv.id);
-        setMessages(msgs);
+        setMessages(msgs as Message[]);
 
         if (msgs.length === 0) {
           await sendInitialMessage(session.user.id, conv.id, profile.name);
@@ -83,7 +83,7 @@ export default function Chat() {
       const response = await sendMessage(uid, convId, welcomePrompt);
       
       const updated = await getConversationMessages(convId);
-      setMessages(updated);
+      setMessages(updated as Message[]);
     } catch (err) {
       console.error("Initial message error:", err);
     } finally {
@@ -111,11 +111,11 @@ export default function Chat() {
       await sendMessage(userId, conversationId, userMessage);
       
       const updated = await getConversationMessages(conversationId);
-      setMessages(updated);
+      setMessages(updated as Message[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
       const updated = await getConversationMessages(conversationId);
-      setMessages(updated);
+      setMessages(updated as Message[]);
     } finally {
       setLoading(false);
     }
