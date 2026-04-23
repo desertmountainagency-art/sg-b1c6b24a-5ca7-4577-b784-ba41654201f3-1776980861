@@ -1,6 +1,6 @@
 ---
 title: Onboarding Intake Flow
-status: todo
+status: done
 priority: high
 type: feature
 tags: [onboarding, ux]
@@ -13,10 +13,10 @@ position: 2
 Multi-step onboarding survey collecting name, short/long-term goals, current challenges, emotional baseline, mentor style preference. Generates initial mentor introduction message.
 
 ## Checklist
-- [ ] Multi-step form component: name → goals → challenges → emotional state → mentor style
-- [ ] Store onboarding data in profiles table
-- [ ] Generate initial mentor welcome message using user context
-- [ ] Redirect to chat interface after completion
+- [x] Multi-step form component: name → goals → challenges → emotional state → mentor style
+- [x] Store onboarding data in profiles table
+- [x] Generate initial mentor welcome message using user context
+- [x] Redirect to chat interface after completion
 
 ## Acceptance
 - New users complete intake flow and see personalized mentor greeting
