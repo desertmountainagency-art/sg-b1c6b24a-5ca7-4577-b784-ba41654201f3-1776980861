@@ -94,15 +94,15 @@ export default function Onboarding() {
       console.log("Session valid, userId:", session.user.id);
       console.log("Form data:", formData);
 
-      // Use UPSERT to handle both insert and update cases
+      // Use UPSERT with correct column names matching database schema
       const profileData = {
         id: session.user.id,
         name: formData.name,
-        short_term_goals: formData.shortTermGoals,
-        long_term_goals: formData.longTermGoals,
-        current_challenges: formData.challenges,
-        emotional_baseline: formData.emotionalBaseline,
-        mentor_style: formData.mentorStyle,
+        goals_short_term: formData.shortTermGoals,
+        goals_long_term: formData.longTermGoals,
+        challenges_current: formData.challenges,
+        baseline_emotional: formData.emotionalBaseline,
+        style_mentor: formData.mentorStyle,
       };
 
       console.log("Upserting profile:", profileData);
