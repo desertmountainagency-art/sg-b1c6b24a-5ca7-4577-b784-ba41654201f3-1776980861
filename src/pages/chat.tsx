@@ -129,77 +129,59 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
-      
-      <main className="flex flex-1 flex-col">
-        <div className="container flex-1 py-6">
-          <div className="mx-auto flex h-full max-w-4xl flex-col">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Your Future Self</h1>
+      <main className="editorial-container py-8">
+        <div className="max-w-3xl mx-auto">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="reflection-card min-h-[600px] flex flex-col">
+            <div className="flex-1 overflow-y-auto mb-6 space-y-6" ref={messagesEndRef}>
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={message.role === "assistant" ? "message-mentor" : "message-user"}
+                >
+                  {message.content}
+                </div>
+              ))}
+              {loading && (
+                <div className="flex items-center gap-3 p-6">
+                  <div className="flex gap-1">
+                    <div className="h-2 w-2 rounded-full bg-primary/30 animate-breath" style={{ animationDelay: "0s" }} />
+                    <div className="h-2 w-2 rounded-full bg-primary/30 animate-breath" style={{ animationDelay: "0.3s" }} />
+                    <div className="h-2 w-2 rounded-full bg-primary/30 animate-breath" style={{ animationDelay: "0.6s" }} />
+                  </div>
+                  <span className="ui-sm text-muted-foreground">Your future self is thinking...</span>
+                </div>
+              )}
             </div>
 
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex-1 overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-sm mb-4">
-              <div className="space-y-6">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {msg.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                
-                {loading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-3">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
+            <div className="border-t border-outline-variant/30 pt-6">
+              <div className="flex gap-3">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Share what's on your mind..."
+                  disabled={loading}
+                  rows={3}
+                  className="flex-1 resize-none ui-md"
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={!input.trim() || loading}
+                  size="lg"
+                  className="self-end shadow-ambient"
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
               </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Share what's on your mind..."
-                className="min-h-[80px] resize-none"
-                disabled={loading}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || loading}
-                size="lg"
-                className="gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
             </div>
           </div>
         </div>
