@@ -4,21 +4,20 @@
 An AI-powered personal growth platform where users converse with their future, idealized self — a mentor who has already overcome their struggles and achieved their goals. Intimate, transformative conversations that feel like talking to the wisest version of yourself.
 
 ## Design
-Color palette (warm, grounding, contemplative):
-- `--primary: 142 45% 45%` (sage green - growth & wisdom)
-- `--secondary: 142 30% 65%` (soft sage - supportive accents)
-- `--accent: 28 80% 52%` (warm amber - moments of insight)
-- `--muted: 45 15% 88%` (warm cream - calm backgrounds)
-- `--background: 45 20% 96%` (soft cream)
-- `--foreground: 180 10% 15%` (deep charcoal)
-- `--card: 0 0% 100%` (pure white - conversation cards)
-- `--border: 45 10% 85%` (subtle warm gray)
+Color palette (Aura of Time — warm, grounding, contemplative):
+- `--primary: 142 45% 11%` (deep forest green #18241b - growth & wisdom)
+- `--secondary: 36 84% 27%` (muted ochre #7b580d - accent & insights)
+- `--tertiary: 60 20% 12%` (warm bone #21211d - grounding)
+- `--background: 40 56% 98%` (soft cream #fcf9f5)
+- `--foreground: 60 7% 11%` (deep charcoal #1c1c1a)
+- `--surface-container: 40 20% 93%` (warm tonal layers)
+- `--outline: 120 4% 46%` (warm gray borders)
 
 Typography:
-- Headings: Cormorant Garamond (serif, wisdom & gravitas)
-- Body: Inter (clean, conversational clarity)
+- Headings/Mentor voice: Noto Serif (wisdom, authority, calm)
+- Body/UI: Manrope (clean, balanced, functional)
 
-Style: Calm presence meets forward momentum. Generous whitespace, soft shadows, subtle entrance animations. Interface breathes.
+Style: Temporal Sanctuary. Minimalism meets Tactile Zen. Heavy whitespace, organic textures, soft ambient shadows tinted with forest green. Feels like a quiet library or sun-drenched stone garden — stable, permanent, breathable. Editorial composition, not app-like rigidness.
 
 ## Features
 - Email authentication with onboarding intake (name, goals, challenges, emotional baseline, mentor style)
