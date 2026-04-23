@@ -1,6 +1,6 @@
 ---
 title: Foundation & Authentication
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [auth, database, design-system]
@@ -17,7 +17,7 @@ Core infrastructure: design system, database schema, authentication service, lan
 - [x] Database schema: profiles table (name, goals, challenges, emotional_baseline, mentor_style), conversations table, messages table, goals table with RLS policies
 - [x] Landing page: hero explaining "your future self as mentor", email signup CTA, clean intimate design
 - [x] Header navigation: logo, sign in/sign up buttons
-- [ ] Authentication service: email signup/login with Supabase Auth
+- [x] Authentication service: email signup/login with Supabase Auth
 
 ## Acceptance
 - User can visit landing page and understand the concept
