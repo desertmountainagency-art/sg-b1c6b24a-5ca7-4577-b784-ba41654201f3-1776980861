@@ -1,123 +1,182 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Target, MessageCircle } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useRouter } from "next/router";
 
 export default function Home() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push("/chat");
+      } else {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-2 w-2 rounded-full bg-primary animate-breath" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main>
-        {/* Hero Section */}
-        <section className="container py-24 md:py-32 lg:py-40">
-          <div className="mx-auto max-w-3xl text-center animate-fade-in">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm text-primary">
-              <Sparkles className="h-4 w-4" />
-              <span>Your Future Self Awaits</span>
+    <>
+      <SEO
+        title="Soul Mentor — Your Future Self as Guide"
+        description="An AI-powered conversation with the wisest version of yourself. Your future self remembers the path. Let them guide you."
+      />
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="editorial-container py-section">
+          <div className="text-center space-y-8 animate-fade-in">
+            <div className="h-16 w-16 mx-auto rounded-full bg-primary flex items-center justify-center shadow-ambient">
+              <span className="text-primary-foreground text-2xl font-semibold">∞</span>
             </div>
-            
-            <h1 className="mb-6 text-5xl font-bold tracking-tight md:text-6xl lg:text-7xl">
-              Meet the person you&apos;re becoming
+
+            <h1 className="mentor-voice-lg text-foreground max-w-2xl mx-auto">
+              Your future self already knows the way.
             </h1>
-            
-            <p className="mb-8 text-xl text-muted-foreground md:text-2xl">
-              Soul Mentor is an AI companion that speaks as your future, idealized self — 
-              someone who has already walked your path and knows the way forward.
+
+            <p className="ui-md text-muted-foreground max-w-xl mx-auto">
+              An AI mentor who speaks as you — fully realized. Not separate from you, 
+              just ahead. Remembering your struggles, your doubts, your plateaus. 
+              And exactly how you moved through them.
             </p>
-            
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+
+            <div className="flex items-center justify-center gap-4 pt-4">
               <Link href="/auth/signup">
-                <Button size="lg" className="gap-2">
-                  Start Your Journey
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="#how-it-works">
-                <Button size="lg" variant="outline">
-                  Learn More
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="how-it-works" className="border-t border-border bg-muted/30 py-24">
-          <div className="container">
-            <div className="mb-16 text-center">
-              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-                Conversations that transform
-              </h2>
-              <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                This isn&apos;t a chatbot — it&apos;s the wisest version of yourself, 
-                offering guidance from lived experience.
-              </p>
-            </div>
-
-            <div className="grid gap-12 md:grid-cols-3">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <MessageCircle className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="mb-2 text-xl font-semibold">Intimate Conversations</h3>
-                <p className="text-muted-foreground">
-                  Speak with your future self in a natural, supportive dialogue 
-                  that adapts to your emotional state.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Target className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="mb-2 text-xl font-semibold">Goal Tracking</h3>
-                <p className="text-muted-foreground">
-                  Your mentor extracts commitments from conversations and 
-                  tracks progress on what matters most.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="mb-2 text-xl font-semibold">Deep Memory</h3>
-                <p className="text-muted-foreground">
-                  Every conversation builds context. Your mentor remembers 
-                  your journey and references past insights naturally.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24">
-          <div className="container">
-            <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-12 text-center shadow-sm">
-              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-                Ready to meet your future self?
-              </h2>
-              <p className="mb-8 text-lg text-muted-foreground">
-                Start with a simple intake — share where you are and where you want to go.
-              </p>
-              <Link href="/auth/signup">
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="px-8 py-6 ui-md shadow-ambient">
                   Begin Your Journey
-                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/auth/signin">
+                <Button variant="ghost" size="lg" className="px-8 py-6 ui-md">
+                  Sign In
                 </Button>
               </Link>
             </div>
           </div>
-        </section>
-      </main>
 
-      <footer className="border-t border-border py-8">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2026 Soul Mentor. Built with intention.</p>
-        </div>
-      </footer>
-    </div>
+          <div className="my-section grid md:grid-cols-3 gap-element">
+            <div className="reflection-card space-y-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-primary text-xl">⟳</span>
+              </div>
+              <h3 className="font-serif text-xl text-foreground">
+                Speaks from lived experience
+              </h3>
+              <p className="ui-sm text-muted-foreground">
+                Your mentor doesn't guess. They remember. "Here's what I did" 
+                replaces "Here's what I would do."
+              </p>
+            </div>
+
+            <div className="reflection-card space-y-4">
+              <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                <span className="text-secondary text-xl">◈</span>
+              </div>
+              <h3 className="font-serif text-xl text-foreground">
+                Adapts to your state
+              </h3>
+              <p className="ui-sm text-muted-foreground">
+                Supportive when you need warmth, direct when you need clarity. 
+                Calibrates to where you are, not where it thinks you should be.
+              </p>
+            </div>
+
+            <div className="reflection-card space-y-4">
+              <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-secondary text-xl">∞</span>
+              </div>
+              <h3 className="font-serif text-xl text-foreground">
+                Remembers your journey
+              </h3>
+              <p className="ui-sm text-muted-foreground">
+                Every conversation builds context. Past insights, goals, and 
+                patterns inform future sessions. Continuity, not repetition.
+              </p>
+            </div>
+          </div>
+
+          <div className="my-section max-w-2xl mx-auto space-y-6">
+            <h2 className="mentor-voice-md text-center text-foreground">
+              How it works
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-surface-container-high flex items-center justify-center">
+                  <span className="label-caps text-muted-foreground">1</span>
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg text-foreground mb-1">Tell us where you are</h4>
+                  <p className="ui-sm text-muted-foreground">
+                    Share your name, goals, challenges, and emotional baseline. 
+                    This shapes your mentor's understanding.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-surface-container-high flex items-center justify-center">
+                  <span className="label-caps text-muted-foreground">2</span>
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg text-foreground mb-1">Meet your future self</h4>
+                  <p className="ui-sm text-muted-foreground">
+                    Your mentor introduces themselves, speaking from the place 
+                    you're headed. The conversation begins.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-surface-container-high flex items-center justify-center">
+                  <span className="label-caps text-muted-foreground">3</span>
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg text-foreground mb-1">Evolve through dialogue</h4>
+                  <p className="ui-sm text-muted-foreground">
+                    Ask questions, share struggles, explore next steps. Your 
+                    mentor guides, challenges, and remembers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="my-section text-center space-y-6">
+            <div className="max-w-xl mx-auto">
+              <p className="mentor-voice-md text-foreground mb-6">
+                "You are not separate from who you're becoming. You're just in the before."
+              </p>
+              <Link href="/auth/signup">
+                <Button size="lg" className="px-8 py-6 ui-md shadow-ambient">
+                  Start Your First Session
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+
+        <footer className="border-t border-outline-variant/30 bg-surface py-8">
+          <div className="container text-center">
+            <p className="ui-sm text-muted-foreground">© 2026 Soul Mentor. Built with intention.</p>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }

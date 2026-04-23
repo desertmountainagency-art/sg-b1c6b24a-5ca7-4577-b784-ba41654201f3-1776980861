@@ -139,8 +139,8 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-12">
-        <div className="mx-auto max-w-2xl">
+      <main className="editorial-container py-12">
+        <div className="max-w-2xl mx-auto">
           <div className="mb-8 text-center">
             <div className="mb-4 flex items-center justify-center gap-2">
               {STEPS.map((step) => (
@@ -151,22 +151,22 @@ export default function Onboarding() {
                       ? "bg-primary"
                       : step.id < currentStep
                       ? "bg-primary/50"
-                      : "bg-muted"
+                      : "bg-surface-container-high"
                   }`}
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="label-caps text-muted-foreground">
               Step {currentStep} of {STEPS.length}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm animate-fade-in">
+          <div className="reflection-card animate-fade-in">
             <div className="mb-8">
-              <h1 className="mb-2 text-3xl font-bold">
+              <h1 className="mentor-voice-md text-foreground mb-2">
                 {STEPS[currentStep - 1].title}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="ui-sm text-muted-foreground">
                 {STEPS[currentStep - 1].subtitle}
               </p>
             </div>
@@ -181,7 +181,7 @@ export default function Onboarding() {
             <div className="space-y-6">
               {currentStep === 1 && (
                 <div className="space-y-2">
-                  <Label htmlFor="name">Your name</Label>
+                  <Label htmlFor="name" className="ui-sm">Your name</Label>
                   <Input
                     id="name"
                     placeholder="What should your future self call you?"
@@ -190,6 +190,7 @@ export default function Onboarding() {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     autoFocus
+                    className="ui-md"
                   />
                 </div>
               )}
@@ -197,7 +198,7 @@ export default function Onboarding() {
               {currentStep === 2 && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="shortTermGoals">Short-term goals (next 3-6 months)</Label>
+                    <Label htmlFor="shortTermGoals" className="ui-sm">Short-term goals (next 3-6 months)</Label>
                     <Textarea
                       id="shortTermGoals"
                       placeholder="What do you want to achieve soon?"
@@ -207,10 +208,11 @@ export default function Onboarding() {
                       }
                       rows={4}
                       autoFocus
+                      className="ui-md"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="longTermGoals">Long-term vision (1-5 years)</Label>
+                    <Label htmlFor="longTermGoals" className="ui-sm">Long-term vision (1-5 years)</Label>
                     <Textarea
                       id="longTermGoals"
                       placeholder="Where do you see yourself in the future?"
@@ -219,6 +221,7 @@ export default function Onboarding() {
                         setFormData({ ...formData, longTermGoals: e.target.value })
                       }
                       rows={4}
+                      className="ui-md"
                     />
                   </div>
                 </>
@@ -226,7 +229,7 @@ export default function Onboarding() {
 
               {currentStep === 3 && (
                 <div className="space-y-2">
-                  <Label htmlFor="challenges">Current challenges</Label>
+                  <Label htmlFor="challenges" className="ui-sm">Current challenges</Label>
                   <Textarea
                     id="challenges"
                     placeholder="What's standing in your way? What feels hard right now?"
@@ -236,13 +239,14 @@ export default function Onboarding() {
                     }
                     rows={6}
                     autoFocus
+                    className="ui-md"
                   />
                 </div>
               )}
 
               {currentStep === 4 && (
                 <div className="space-y-2">
-                  <Label htmlFor="emotionalBaseline">How are you feeling right now?</Label>
+                  <Label htmlFor="emotionalBaseline" className="ui-sm">How are you feeling right now?</Label>
                   <Textarea
                     id="emotionalBaseline"
                     placeholder="Stressed? Motivated? Stuck? Uncertain? Describe your current state."
@@ -252,50 +256,51 @@ export default function Onboarding() {
                     }
                     rows={5}
                     autoFocus
+                    className="ui-md"
                   />
                 </div>
               )}
 
               {currentStep === 5 && (
                 <div className="space-y-4">
-                  <Label>How should your mentor show up?</Label>
+                  <Label className="ui-sm">How should your mentor show up?</Label>
                   <RadioGroup
                     value={formData.mentorStyle}
                     onValueChange={(value) =>
                       setFormData({ ...formData, mentorStyle: value })
                     }
                   >
-                    <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:border-primary transition-colors">
+                    <div className="flex items-start space-x-3 rounded-lg border border-outline-variant p-4 hover:border-primary transition-colors">
                       <RadioGroupItem value="supportive" id="supportive" />
                       <div className="flex-1">
-                        <Label htmlFor="supportive" className="font-semibold cursor-pointer">
+                        <Label htmlFor="supportive" className="ui-sm font-semibold cursor-pointer">
                           Warm & Supportive
                         </Label>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="ui-sm text-muted-foreground mt-1">
                           Gentle encouragement, emotional validation, compassionate guidance
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:border-primary transition-colors">
+                    <div className="flex items-start space-x-3 rounded-lg border border-outline-variant p-4 hover:border-primary transition-colors">
                       <RadioGroupItem value="balanced" id="balanced" />
                       <div className="flex-1">
-                        <Label htmlFor="balanced" className="font-semibold cursor-pointer">
+                        <Label htmlFor="balanced" className="ui-sm font-semibold cursor-pointer">
                           Balanced
                         </Label>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="ui-sm text-muted-foreground mt-1">
                           Mix of support and challenge, adapting to what you need
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3 rounded-lg border border-border p-4 hover:border-primary transition-colors">
+                    <div className="flex items-start space-x-3 rounded-lg border border-outline-variant p-4 hover:border-primary transition-colors">
                       <RadioGroupItem value="direct" id="direct" />
                       <div className="flex-1">
-                        <Label htmlFor="direct" className="font-semibold cursor-pointer">
+                        <Label htmlFor="direct" className="ui-sm font-semibold cursor-pointer">
                           Direct & Challenging
                         </Label>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="ui-sm text-muted-foreground mt-1">
                           Straight talk, actionable clarity, push you forward
                         </p>
                       </div>
@@ -311,7 +316,7 @@ export default function Onboarding() {
                   variant="outline"
                   onClick={handleBack}
                   disabled={loading}
-                  className="gap-2"
+                  className="gap-2 ui-sm"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back
@@ -322,7 +327,7 @@ export default function Onboarding() {
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid() || loading}
-                  className="ml-auto gap-2"
+                  className="ml-auto gap-2 ui-sm shadow-ambient"
                 >
                   Continue
                   <ArrowRight className="h-4 w-4" />
@@ -331,7 +336,7 @@ export default function Onboarding() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!isStepValid() || loading}
-                  className="ml-auto gap-2"
+                  className="ml-auto gap-2 ui-sm shadow-ambient"
                 >
                   {loading ? (
                     <>

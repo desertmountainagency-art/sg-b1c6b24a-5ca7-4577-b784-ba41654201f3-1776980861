@@ -17,7 +17,7 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -26,16 +26,13 @@ export default function SignUp() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/onboarding`,
-        },
       });
 
       if (error) throw error;
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign up");
+      setError(err instanceof Error ? err.message : "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -45,21 +42,21 @@ export default function SignUp() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container py-24">
-          <div className="mx-auto max-w-md animate-fade-in">
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <AlertCircle className="h-6 w-6 text-primary" />
-              </div>
-              <h1 className="mb-4 text-3xl font-bold">Check your email</h1>
-              <p className="mb-6 text-muted-foreground">
-                We&apos;ve sent you a confirmation link to <strong>{email}</strong>. 
-                Click the link to verify your account and begin your onboarding.
-              </p>
-              <Button onClick={() => router.push("/")} className="w-full">
-                Back to Home
-              </Button>
+        <main className="editorial-container py-section">
+          <div className="max-w-md mx-auto text-center space-y-6 animate-fade-in">
+            <div className="h-16 w-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-primary text-2xl">✓</span>
             </div>
+            <h1 className="mentor-voice-md text-foreground">Check your email</h1>
+            <p className="ui-md text-muted-foreground">
+              We sent a confirmation link to <strong>{email}</strong>. 
+              Click the link to verify your account and begin your journey.
+            </p>
+            <Link href="/auth/signin">
+              <Button variant="ghost" className="ui-sm">
+                Return to Sign In
+              </Button>
+            </Link>
           </div>
         </main>
       </div>
@@ -69,17 +66,17 @@ export default function SignUp() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-24">
-        <div className="mx-auto max-w-md animate-fade-in">
-          <div className="mb-8 text-center">
-            <h1 className="mb-2 text-4xl font-bold">Begin your journey</h1>
-            <p className="text-muted-foreground">
-              Create your account to meet your future self
+      <main className="editorial-container py-section">
+        <div className="max-w-md mx-auto animate-fade-in">
+          <div className="text-center mb-8">
+            <h1 className="mentor-voice-md text-foreground mb-2">Begin your journey</h1>
+            <p className="ui-sm text-muted-foreground">
+              Create an account to meet your future self
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-            <form onSubmit={handleSignUp} className="space-y-6">
+          <div className="reflection-card">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -88,36 +85,36 @@ export default function SignUp() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="ui-sm">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading}
+                  placeholder="you@example.com"
+                  className="ui-md"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="ui-sm">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a secure password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
-                  disabled={loading}
+                  placeholder="At least 6 characters"
+                  className="ui-md"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Must be at least 6 characters
-                </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full py-6 ui-md shadow-ambient"
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -128,7 +125,7 @@ export default function SignUp() {
                 )}
               </Button>
 
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center ui-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/auth/signin" className="text-primary hover:underline">
                   Sign in
