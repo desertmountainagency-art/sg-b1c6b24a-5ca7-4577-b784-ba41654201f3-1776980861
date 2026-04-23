@@ -70,50 +70,84 @@ export default function Onboarding() {
   };
 
   const handleSubmit = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setError("No user session found. Please sign in again.");
+      return;
+    }
 
     setError("");
     setLoading(true);
 
     try {
+      // Verify session is still valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Your session has expired. Please sign in again.");
+      }
+
+      if (!session) {
+        throw new Error("No active session. Please sign in again.");
+      }
+
+      console.log("Session valid, userId:", session.user.id);
+      console.log("Form data:", formData);
+
       // Use UPSERT to handle both insert and update cases
-      const { error: upsertError } = await supabase
+      const profileData = {
+        id: session.user.id,
+        name: formData.name,
+        short_term_goals: formData.shortTermGoals,
+        long_term_goals: formData.longTermGoals,
+        current_challenges: formData.challenges,
+        emotional_baseline: formData.emotionalBaseline,
+        mentor_style: formData.mentorStyle,
+      };
+
+      console.log("Upserting profile:", profileData);
+
+      const { data: profileResult, error: upsertError } = await supabase
         .from("profiles")
-        .upsert({
-          id: userId,
-          name: formData.name,
-          short_term_goals: formData.shortTermGoals,
-          long_term_goals: formData.longTermGoals,
-          current_challenges: formData.challenges,
-          emotional_baseline: formData.emotionalBaseline,
-          mentor_style: formData.mentorStyle,
-        }, {
+        .upsert(profileData, {
           onConflict: "id"
-        });
+        })
+        .select();
+
+      console.log("Upsert response:", { profileResult, upsertError });
 
       if (upsertError) {
         console.error("Profile upsert error:", upsertError);
-        throw upsertError;
+        throw new Error(`Profile save failed: ${upsertError.message}`);
       }
 
-      const { error: conversationError } = await supabase
+      console.log("Profile saved, creating conversation...");
+
+      const { data: conversationData, error: conversationError } = await supabase
         .from("conversations")
         .insert({
-          user_id: userId,
+          user_id: session.user.id,
           title: "First Session",
         })
         .select()
         .single();
 
+      console.log("Conversation response:", { conversationData, conversationError });
+
       if (conversationError) {
-        console.error("Conversation insert error:", conversationError);
-        throw conversationError;
+        console.error("Conversation error:", conversationError);
+        throw new Error(`Conversation creation failed: ${conversationError.message}`);
       }
 
+      console.log("✅ Success! Redirecting to chat...");
       router.push("/chat");
     } catch (err) {
-      console.error("Full error object:", err);
-      setError(err instanceof Error ? err.message : "Failed to save profile");
+      console.error("❌ Full error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
