@@ -27,16 +27,19 @@ const config: Config = {
           foreground: "hsl(var(--primary-foreground))",
           container: "hsl(var(--primary-container))",
         },
+        "on-primary-container": "hsl(var(--on-primary-container))",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
           container: "hsl(var(--secondary-container))",
         },
+        "on-secondary-container": "hsl(var(--on-secondary-container))",
         tertiary: {
           DEFAULT: "hsl(var(--tertiary))",
           foreground: "hsl(var(--tertiary-foreground))",
           container: "hsl(var(--tertiary-container))",
         },
+        "on-tertiary-container": "hsl(var(--on-tertiary-container))",
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
