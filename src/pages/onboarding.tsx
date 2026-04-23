@@ -363,19 +363,28 @@ export default function Onboarding() {
                   disabled={!isStepValid() || loading}
                   className="ml-auto gap-2 ui-sm shadow-ambient"
                 >
-                  Continue
-                  <ArrowRight className="h-4 w-4" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               ) : (
                 <Button
                   onClick={handleSubmit}
                   disabled={!isStepValid() || loading}
-                  className="ml-auto gap-2 ui-sm shadow-ambient"
+                  className="ml-auto gap-2 ui-sm shadow-ambient min-w-[200px]"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
+                      Saving profile...
                     </>
                   ) : (
                     <>
