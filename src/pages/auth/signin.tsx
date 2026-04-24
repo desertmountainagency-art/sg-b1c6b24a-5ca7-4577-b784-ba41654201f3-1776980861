@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/authService";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function SignIn() {
@@ -21,17 +21,37 @@ export default function SignIn() {
     setError("");
     setLoading(true);
 
+    console.log("SignIn: Attempting sign in for:", email);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Validate inputs
+      if (!email || !password) {
+        throw new Error("Please fill in all fields");
+      }
 
-      if (error) throw error;
+      console.log("SignIn: Calling authService.signIn...");
+      const { user, error: signInError } = await authService.signIn(email, password);
 
+      console.log("SignIn: Result:", { userId: user?.id, error: signInError?.message });
+
+      if (signInError) {
+        console.error("SignIn: Error details:", signInError);
+        throw new Error(signInError.message || "Failed to sign in");
+      }
+
+      if (!user) {
+        throw new Error("No user returned from sign in");
+      }
+
+      console.log("SignIn: Success! Redirecting to chat...");
       router.push("/chat");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign in");
+      console.error("SignIn: Full error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please check the console.");
+      }
     } finally {
       setLoading(false);
     }
