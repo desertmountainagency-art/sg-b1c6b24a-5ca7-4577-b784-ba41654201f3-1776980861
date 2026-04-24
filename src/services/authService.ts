@@ -1,219 +1,115 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  user_metadata?: any;
-  created_at?: string;
-}
-
-export interface AuthError {
-  message: string;
-  code?: string;
-}
-
-// Dynamic URL Helper
-const getURL = () => {
-  let url = process?.env?.NEXT_PUBLIC_VERCEL_URL ?? 
-           process?.env?.NEXT_PUBLIC_SITE_URL ?? 
-           'http://localhost:3000'
-  
-  // Handle undefined or null url
-  if (!url) {
-    url = 'http://localhost:3000';
-  }
-  
-  // Ensure url has protocol
-  url = url.startsWith('http') ? url : `https://${url}`
-  
-  // Ensure url ends with slash
-  url = url.endsWith('/') ? url : `${url}/`
-  
-  return url
-}
+import type { User } from "@supabase/supabase-js";
 
 export const authService = {
-  // Get current user
-  async getCurrentUser(): Promise<AuthUser | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user ? {
-      id: user.id,
-      email: user.email || "",
-      user_metadata: user.user_metadata,
-      created_at: user.created_at
-    } : null;
-  },
-
-  // Get current session
-  async getCurrentSession(): Promise<Session | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
-  },
-
-  // Sign up with email and password
-  async signUp(email: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
+  async signUp(email: string, password: string) {
     try {
+      console.log("AuthService: Starting signup for:", email);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${getURL()}auth/confirm-email`
-        }
+      });
+
+      console.log("AuthService: Signup response:", { 
+        userId: data?.user?.id, 
+        error: error?.message 
       });
 
       if (error) {
-        return { user: null, error: { message: error.message, code: error.status?.toString() } };
+        console.error("AuthService: Signup error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        return { user: null, error };
       }
 
-      const authUser = data.user ? {
-        id: data.user.id,
-        email: data.user.email || "",
-        user_metadata: data.user.user_metadata,
-        created_at: data.user.created_at
-      } : null;
-
-      return { user: authUser, error: null };
-    } catch (error) {
+      return { user: data.user, error: null };
+    } catch (err) {
+      console.error("AuthService: Unexpected error during signup:", err);
       return { 
         user: null, 
-        error: { message: "An unexpected error occurred during sign up" } 
+        error: err instanceof Error ? err : new Error("Unexpected signup error") 
       };
     }
   },
 
-  // Sign in with email and password
-  async signIn(email: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
+  async signIn(email: string, password: string) {
     try {
+      console.log("AuthService: Starting signin for:", email);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log("AuthService: Signin response:", { 
+        userId: data?.user?.id, 
+        error: error?.message 
+      });
+
       if (error) {
-        return { user: null, error: { message: error.message, code: error.status?.toString() } };
+        console.error("AuthService: Signin error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        return { user: null, error };
       }
 
-      const authUser = data.user ? {
-        id: data.user.id,
-        email: data.user.email || "",
-        user_metadata: data.user.user_metadata,
-        created_at: data.user.created_at
-      } : null;
-
-      return { user: authUser, error: null };
-    } catch (error) {
+      return { user: data.user, error: null };
+    } catch (err) {
+      console.error("AuthService: Unexpected error during signin:", err);
       return { 
         user: null, 
-        error: { message: "An unexpected error occurred during sign in" } 
+        error: err instanceof Error ? err : new Error("Unexpected signin error") 
       };
     }
   },
 
-  // Sign out
-  async signOut(): Promise<{ error: AuthError | null }> {
+  async signOut() {
     try {
+      console.log("AuthService: Signing out...");
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        return { error: { message: error.message } };
+        console.error("AuthService: Signout error:", error);
+        return { error };
       }
 
+      console.log("AuthService: Signout successful");
       return { error: null };
-    } catch (error) {
+    } catch (err) {
+      console.error("AuthService: Unexpected error during signout:", err);
       return { 
-        error: { message: "An unexpected error occurred during sign out" } 
+        error: err instanceof Error ? err : new Error("Unexpected signout error") 
       };
     }
   },
 
-  // Reset password
-  async resetPassword(email: string): Promise<{ error: AuthError | null }> {
+  async getCurrentUser() {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getURL()}auth/reset-password`,
-      });
-
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
       if (error) {
-        return { error: { message: error.message } };
+        console.error("AuthService: Get current user error:", error);
+        return { user: null, error };
       }
 
-      return { error: null };
-    } catch (error) {
-      return { 
-        error: { message: "An unexpected error occurred during password reset" } 
-      };
-    }
-  },
-
-  // Confirm email (REQUIRED)
-  async confirmEmail(token: string, type: 'signup' | 'recovery' | 'email_change' = 'signup'): Promise<{ user: AuthUser | null; error: AuthError | null }> {
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: type
-      });
-
-      if (error) {
-        return { user: null, error: { message: error.message, code: error.status?.toString() } };
-      }
-
-      const authUser = data.user ? {
-        id: data.user.id,
-        email: data.user.email || "",
-        user_metadata: data.user.user_metadata,
-        created_at: data.user.created_at
-      } : null;
-
-      return { user: authUser, error: null };
-    } catch (error) {
+      return { user: session?.user ?? null, error: null };
+    } catch (err) {
+      console.error("AuthService: Unexpected error getting current user:", err);
       return { 
         user: null, 
-        error: { message: "An unexpected error occurred during email confirmation" } 
+        error: err instanceof Error ? err : new Error("Unexpected error") 
       };
     }
   },
 
-  // Listen to auth state changes
-  onAuthStateChange(callback: (event: string, session: Session | null) => void) {
-    return supabase.auth.onAuthStateChange(callback);
+  onAuthStateChange(callback: (user: User | null) => void) {
+    return supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session?.user ?? null);
+    });
   }
 };
-
-export async function signup(email: string, password: string, name: string) {
-  try {
-    console.log("AuthService: Starting signup for:", email);
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-        },
-      },
-    });
-
-    console.log("AuthService: Signup response:", { 
-      userId: data?.user?.id, 
-      error: error?.message 
-    });
-
-    if (error) {
-      console.error("AuthService: Signup error details:", {
-        message: error.message,
-        status: error.status,
-        name: error.name
-      });
-      return { user: null, error };
-    }
-
-    return { user: data.user, error: null };
-  } catch (err) {
-    console.error("AuthService: Unexpected error during signup:", err);
-    return { 
-      user: null, 
-      error: err instanceof Error ? err : new Error("Unexpected signup error") 
-    };
-  }
-}

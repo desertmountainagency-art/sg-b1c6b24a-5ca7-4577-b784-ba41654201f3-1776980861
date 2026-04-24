@@ -2,15 +2,37 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Read from environment variables instead of hardcoding tokens
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing Supabase environment variables. Please check your .env.local file.');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("❌ Supabase configuration error:", {
+    url: supabaseUrl ? "✓ Present" : "✗ Missing",
+    key: supabaseAnonKey ? "✓ Present" : "✗ Missing"
+  });
+  throw new Error(
+    "Missing Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  );
 }
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+console.log("✅ Supabase client initializing with URL:", supabaseUrl);
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
+
+// Test connection on initialization
+supabase.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    console.error("⚠️ Supabase auth connection test failed:", error);
+  } else {
+    console.log("✅ Supabase auth connection successful", {
+      hasSession: !!data.session,
+      userId: data.session?.user?.id
+    });
+  }
+});
