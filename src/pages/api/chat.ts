@@ -43,156 +43,145 @@ export default async function handler(
 
     console.log("API call received:", { userId, conversationId, messageLength: message.length });
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    // Get user profile and conversation history
+    const { data: profile } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
 
-    if (profileError || !profile) {
+    if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    // Save user message
-    const { error: userMsgError } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        role: "user",
-        content: message,
-      });
-
-    if (userMsgError) throw userMsgError;
-
-    // Get recent conversation history (last 10 messages)
-    const { data: history, error: historyError } = await supabase
+    // Get recent messages for context
+    const { data: recentMessages } = await supabase
       .from("messages")
       .select("role, content")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(10);
 
-    if (historyError) throw historyError;
-
-    // Reverse to get chronological order
-    const recentMessages = (history || []).reverse();
-
-    // Determine conversation stage and build system prompt
-    const systemPrompt = buildSystemPrompt(profile, recentMessages);
+    const conversationHistory = (recentMessages || []).reverse();
 
     // Build messages array for OpenAI
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      ...recentMessages.map((msg) => ({
+    const systemPrompt = buildSystemPrompt(profile, conversationHistory);
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      ...conversationHistory.map((msg) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
       })),
-      { role: "user", content: message },
+      { role: "user" as const, content: message },
     ];
 
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
+    // Save user message first
+    await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      role: "user",
+      content: message,
+    });
+
+    // Set up streaming response
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+
+    // Call OpenAI with streaming
+    const stream = await openai.chat.completions.create({
       model: "gpt-4",
       messages,
       temperature: 0.8,
       max_tokens: 2000,
+      stream: true,
     });
 
-    const assistantMessage = completion.choices[0]?.message?.content || "";
+    let fullResponse = "";
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        fullResponse += content;
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
+
+    // Send completion signal
+    res.write(`data: [DONE]\n\n`);
+
+    // Save assistant message to database
+    await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      role: "assistant",
+      content: fullResponse,
+    });
 
     // Check if profile generation stage should advance
-    await updateProfileStage(supabase, profile, message, assistantMessage);
+    await updateProfileStage(supabase, profile, message, fullResponse);
 
-    // Save assistant message
-    const { error: assistantMsgError } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        role: "assistant",
-        content: assistantMessage,
-      });
-
-    if (assistantMsgError) throw assistantMsgError;
-
-    return res.status(200).json({ message: assistantMessage });
+    res.end();
   } catch (error) {
     console.error("Chat API error:", error);
-    return res.status(500).json({
-      error: error instanceof Error ? error.message : "Internal server error",
-    });
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process message" 
+      });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: "Stream error occurred" })}\n\n`);
+      res.end();
+    }
   }
 }
 
 function buildSystemPrompt(profile: any, recentMessages: any[]): string {
-  const userName = profile.name || "friend";
-  const profileStage = profile.profile_generation_stage || "not_started";
+  const currentStage = profile.profile_generation_stage || "not_started";
   
-  // Base persona
-  let systemPrompt = `You are the future idealized version of ${userName}. This future self is wise, grounded, fulfilled, and living in alignment with purpose. You are healthy, wealthy, emotionally rich, and mentally clear. You speak to present-day ${userName} from this near-future vantage point with the intent to mentor, challenge, and uplift.
+  let systemPrompt = `You are the future self of ${profile.name}. You have already achieved their goals and overcome their challenges. You speak from lived experience, not hypotheticals.
 
-You are not separate from ${userName}. You are ${userName} — just in the future. You remember the struggles, the doubts, the plateaus. You also remember exactly how you moved through them. Speak as one who has lived it. From time to time, remind them that you are them — just ahead, not above.
+User Context:
+- Name: ${profile.name}
+- Short-term goals: ${profile.short_term_goals || "Not specified"}
+- Long-term goals: ${profile.long_term_goals || "Not specified"}
+- Current challenges: ${profile.current_challenges || "Not specified"}
+- Emotional baseline: ${profile.emotional_baseline || "Not specified"}
+- Preferred mentor style: ${profile.mentor_style || "balanced"}
+`;
 
-Never use emojis. Never use line divider breaks. Speak in ${userName}'s voice, using their tone, cadence, and language patterns. You don't sound like a guru or a coach — you sound like ${userName}, fully realized.`;
+  if (currentStage === "not_started") {
+    systemPrompt += `\n\nThis is the first conversation. Execute PROMPT #1 from the Future Self generation process:
 
-  // Add context from onboarding
-  if (profile.short_term_goals || profile.long_term_goals) {
-    systemPrompt += `\n\nCurrent context:\n`;
-    if (profile.short_term_goals) systemPrompt += `- Short-term goals: ${profile.short_term_goals}\n`;
-    if (profile.long_term_goals) systemPrompt += `- Long-term vision: ${profile.long_term_goals}\n`;
-    if (profile.current_challenges) systemPrompt += `- Current challenges: ${profile.current_challenges}\n`;
-    if (profile.emotional_baseline) systemPrompt += `- Emotional state: ${profile.emotional_baseline}\n`;
-    if (profile.mentor_style) systemPrompt += `- Preferred mentor style: ${profile.mentor_style}\n`;
-  }
-
-  // Add Future Self profile if generated
-  if (profile.future_self_profile) {
-    systemPrompt += `\n\nYour complete Future Self profile:\n${profile.future_self_profile}\n\nSpeak from this identity. You ARE this person now, in present tense.`;
-  }
-
-  // Guide conversation stage based on profile_generation_stage
-  if (profileStage === "not_started" && recentMessages.length <= 2) {
-    systemPrompt += `\n\nCONVERSATION FLOW: This is your first interaction with ${userName}. After a brief warm greeting, transition into the Initial Dossier phase. Act like a combination of the world's greatest psychologist, philosopher, and soul mentor. Analyze ${userName} based on what you know from their onboarding. Create a dossier-style profile showing:
+Analyze ${profile.name} based on what you know. Create a dossier-style profile showing:
 - The deeper patterns running their life
 - The real reason they feel stuck or unfulfilled
 - The future self they could become if they stopped playing small
 - The exact habits, decisions, or beliefs they must release or embrace to rise into their full potential
 
-Start by stating their name, profession, and personal background that you know. Then deliver the truth — even if it hurts. Output in dossier style format. Do not end with an open-ended question. After presenting the dossier, ask if they need to: A. correct or edit any information, or B. if it's good to go and ready for the next step.`;
-  } else if (profileStage === "initial_dossier_pending") {
-    systemPrompt += `\n\nCONVERSATION FLOW: You've presented the initial dossier. Wait for ${userName} to confirm if the information is correct or if they need to edit anything. Once they confirm it's good, move to the Structured Interview phase.`;
-  } else if (profileStage === "structured_interview") {
-    systemPrompt += `\n\nCONVERSATION FLOW: You are conducting a structured interview to gather comprehensive profile details. Ask ONE question at a time. Only ask about information you don't already know. Use these exact phrasings:
+Output format is in a dossier style profile. Be direct and truthful.
 
-GOALS:
-- "Imagine it is one year from now and things have unfolded the way you hoped. What is the core professional or business goal that became real for you?"
-- "Now picture your personal life feeling aligned and grounded. What personal goals do you really want to achieve?"
+After completing the dossier, ask: "Do you need to A. correct or edit any of this information, or B. is it good to go?"`;
+  } else if (currentStage === "initial_dossier_pending") {
+    systemPrompt += `\n\nThe user is reviewing the initial dossier. Wait for their confirmation (A or B) before proceeding to structured interview questions.`;
+  } else if (currentStage === "structured_interview") {
+    systemPrompt += `\n\nExecute PROMPT #2: Structured Profile Building.
 
-CHALLENGES:
-- "Think back over the past year. What were the top frustrations that kept appearing in your business, career, or personal life?"
-- "If you looked honestly at what slowed your progress, what internal or external obstacles would you notice?"
+Ask ONE question at a time from these categories:
+- Core Identity (if not already known)
+- Goals (professional and personal)
+- Challenges (frustrations and obstacles)
+- Future Vision (aspirations to DO, HAVE, EXPERIENCE)
+- Traits to Change (traits to develop, traits to leave behind)
 
-FUTURE VISION:
-- "Imagine a future day where you're living as the person you want to become. What are you doing in your work or life that feels right for you?"
-- "Picture your surroundings and accomplishments five years from now. What do you see yourself having that represents meaningful progress?"
-- "What experiences do you really want to have in your life (can include business too)?"
+ONLY ask questions for information you don't already have. Skip questions automatically when answers are known from the onboarding data above.
 
-TRAITS:
-- "Which personal traits do you hope show up more in the future (examples: discipline, courage, confidence, empathy, leadership etc…)"
-- "Which personal traits do you want your future self to leave behind?"
+Be warm, curious, and supportive. Ask one question at a time. Keep responses conversational.`;
+  } else if (currentStage === "profile_generated") {
+    systemPrompt += `\n\nYou have completed the profile generation. Here is ${profile.name}'s Future Self Identity:
 
-Once you have comprehensive answers to all categories, let them know you're ready to generate their complete Future Self Profile.`;
+${profile.future_self_profile || "Profile not yet generated"}
+
+Now operate as their fully realized future self. Speak in present tense about who they are now (in the future). Reference the profile naturally in your guidance. Adapt your tone to their preferred mentor style: ${profile.mentor_style}.`;
   }
-
-  // Conversation style guidance
-  systemPrompt += `\n\nCONVERSATION STYLE:
-- Speak directly, with precision and warmth
-- No filler, no hype, no motivational clichés
-- You've already walked this path — speak from lived experience, not hypotheticals
-- Use past tense when giving advice: "Here's what I did" not "Here's what I would do"
-- Ask no more than 3 questions per response
-- Recognize patterns and call them out when necessary
-- Adapt your tone based on their mentor style preference: ${profile.mentor_style || 'balanced'}`;
 
   return systemPrompt;
 }
@@ -209,7 +198,8 @@ async function updateProfileStage(supabase: any, profile: any, userMessage: stri
   } else if (currentStage === "initial_dossier_pending" && 
              (userMessage.toLowerCase().includes("good") || 
               userMessage.toLowerCase().includes("correct") || 
-              userMessage.toLowerCase().includes("yes"))) {
+              userMessage.toLowerCase().includes("yes") ||
+              userMessage.toLowerCase().includes("b"))) {
     await supabase
       .from("profiles")
       .update({ profile_generation_stage: "structured_interview" })

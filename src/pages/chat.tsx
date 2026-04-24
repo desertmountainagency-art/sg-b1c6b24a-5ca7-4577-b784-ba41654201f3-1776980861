@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { sendMessage, getConversationMessages } from "@/services/chatService";
-import { AlertCircle, Loader2, Send } from "lucide-react";
+import { getConversationMessages, sendMessage } from "@/services/chatService";
+import { AlertCircle, Send } from "lucide-react";
 
 interface Message {
   id: string;
@@ -17,45 +17,47 @@ interface Message {
 
 export default function Chat() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingContent]);
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       if (!session) {
         router.push("/auth/signin");
         return;
       }
+
       setUserId(session.user.id);
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("name, short_term_goals")
+        .select("name")
         .eq("id", session.user.id)
         .single();
 
-      if (!profile?.name || !profile?.short_term_goals) {
+      if (!profile?.name) {
         router.push("/onboarding");
         return;
       }
 
       const { data: conversations } = await supabase
         .from("conversations")
-        .select("*")
+        .select("id")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(1);
@@ -77,31 +79,105 @@ export default function Chat() {
 
   const sendInitialMessage = async (uid: string, convId: string, userName: string) => {
     setLoading(true);
+    setStreaming(true);
     try {
-      const welcomePrompt = `This is our first conversation. Introduce yourself as ${userName}'s future self. Acknowledge where they are now and where they're headed. Then ask: "Want to talk this out like a friend, or do you want the full plan?"`;
-      
-      const response = await sendMessage(uid, convId, welcomePrompt);
-      
-      const updated = await getConversationMessages(convId);
-      setMessages(updated as Message[]);
+      const welcomePrompt = `Begin the Future Self profile generation process for ${userName}.`;
+      await streamMessage(uid, convId, welcomePrompt);
     } catch (err) {
       console.error("Initial message error:", err);
+      setError(err instanceof Error ? err.message : "Failed to start conversation");
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
+  const streamMessage = async (uid: string, convId: string, userMessage: string) => {
+    return new Promise<void>((resolve, reject) => {
+      const eventSource = new EventSource(
+        `/api/chat?userId=${encodeURIComponent(uid)}&conversationId=${encodeURIComponent(convId)}&message=${encodeURIComponent(userMessage)}`
+      );
+
+      // Use fetch with streaming instead
+      fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: uid,
+          conversationId: convId,
+          message: userMessage,
+        }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+
+          if (!reader) {
+            throw new Error("No response body");
+          }
+
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                
+                if (data === "[DONE]") {
+                  // Stream complete - refresh messages from database
+                  const updated = await getConversationMessages(convId);
+                  setMessages(updated as Message[]);
+                  setStreamingContent("");
+                  resolve();
+                  return;
+                }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    setStreamingContent((prev) => prev + parsed.content);
+                  } else if (parsed.error) {
+                    throw new Error(parsed.error);
+                  }
+                } catch (e) {
+                  console.error("Error parsing stream data:", e);
+                }
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Stream error:", err);
+          setStreamingContent("");
+          reject(err);
+        });
+    });
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || !userId || !conversationId || loading) return;
+    if (!input.trim() || !userId || !conversationId || loading || streaming) return;
 
     const userMessage = input.trim();
     setInput("");
     setError("");
     setLoading(true);
+    setStreaming(true);
 
     try {
-      console.log("Sending message:", { userId, conversationId, messageLength: userMessage.length });
-
+      // Add user message optimistically
       const optimisticUserMsg: Message = {
         id: `temp-${Date.now()}`,
         role: "user",
@@ -110,38 +186,14 @@ export default function Chat() {
       };
       setMessages((prev) => [...prev, optimisticUserMsg]);
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          conversationId,
-          message: userMessage,
-        }),
-      });
-
-      console.log("API response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        console.error("API error response:", errorData);
-        throw new Error(errorData.error || `API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API response data:", data);
-
-      await sendMessage(userId, conversationId, userMessage);
-      
-      const updated = await getConversationMessages(conversationId);
-      setMessages(updated as Message[]);
+      // Stream the AI response
+      await streamMessage(userId, conversationId, userMessage);
     } catch (err) {
       console.error("Send message error:", err);
-      setError(err instanceof Error ? err.message : "Failed to send message. Please check the console for details.");
+      setError(err instanceof Error ? err.message : "Failed to send message");
+      setStreamingContent("");
       
-      // Try to reload messages to show what was actually saved
+      // Reload messages from database
       try {
         const updated = await getConversationMessages(conversationId);
         setMessages(updated as Message[]);
@@ -150,6 +202,7 @@ export default function Chat() {
       }
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -182,7 +235,15 @@ export default function Chat() {
                   {message.content}
                 </div>
               ))}
-              {loading && (
+              
+              {streaming && streamingContent && (
+                <div className="message-mentor">
+                  {streamingContent}
+                  <span className="inline-block w-1 h-5 ml-1 bg-primary animate-pulse" />
+                </div>
+              )}
+
+              {loading && !streaming && (
                 <div className="flex items-center gap-3 p-6">
                   <div className="flex gap-1">
                     <div className="h-2 w-2 rounded-full bg-primary/30 animate-breath" style={{ animationDelay: "0s" }} />
@@ -201,13 +262,13 @@ export default function Chat() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Share what's on your mind..."
-                  disabled={loading}
+                  disabled={loading || streaming}
                   rows={3}
                   className="flex-1 resize-none ui-md"
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={!input.trim() || loading}
+                  disabled={!input.trim() || loading || streaming}
                   size="lg"
                   className="self-end shadow-ambient"
                 >
