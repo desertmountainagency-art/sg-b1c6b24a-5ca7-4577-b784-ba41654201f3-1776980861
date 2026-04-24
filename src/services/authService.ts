@@ -179,3 +179,41 @@ export const authService = {
     return supabase.auth.onAuthStateChange(callback);
   }
 };
+
+export async function signup(email: string, password: string, name: string) {
+  try {
+    console.log("AuthService: Starting signup for:", email);
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
+
+    console.log("AuthService: Signup response:", { 
+      userId: data?.user?.id, 
+      error: error?.message 
+    });
+
+    if (error) {
+      console.error("AuthService: Signup error details:", {
+        message: error.message,
+        status: error.status,
+        name: error.name
+      });
+      return { user: null, error };
+    }
+
+    return { user: data.user, error: null };
+  } catch (err) {
+    console.error("AuthService: Unexpected error during signup:", err);
+    return { 
+      user: null, 
+      error: err instanceof Error ? err : new Error("Unexpected signup error") 
+    };
+  }
+}

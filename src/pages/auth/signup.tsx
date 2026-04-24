@@ -22,17 +22,41 @@ export default function SignUp() {
     setError("");
     setLoading(true);
 
+    console.log("Signup attempt:", { email, password: "***", name });
+
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // Validate inputs
+      if (!email || !password || !name) {
+        throw new Error("Please fill in all fields");
+      }
 
-      if (error) throw error;
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
 
-      setSuccess(true);
+      console.log("Calling signup...");
+      const { user, error: signUpError } = await signup(email, password, name);
+      
+      console.log("Signup result:", { user: user?.id, error: signUpError });
+
+      if (signUpError) {
+        console.error("Signup error:", signUpError);
+        throw signUpError;
+      }
+
+      if (!user) {
+        throw new Error("No user returned from signup");
+      }
+
+      console.log("Signup successful, redirecting to onboarding...");
+      router.push("/onboarding");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create account");
+      console.error("Full signup error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please check the console.");
+      }
     } finally {
       setLoading(false);
     }
