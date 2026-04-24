@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { authService } from "@/services/authService";
 
 export default function SignUp() {
   const router = useRouter();
@@ -22,11 +23,11 @@ export default function SignUp() {
     setError("");
     setLoading(true);
 
-    console.log("Signup attempt:", { email, password: "***", name });
+    console.log("Signup attempt:", { email, password: "***" });
 
     try {
       // Validate inputs
-      if (!email || !password || !name) {
+      if (!email || !password) {
         throw new Error("Please fill in all fields");
       }
 
@@ -34,22 +35,22 @@ export default function SignUp() {
         throw new Error("Password must be at least 6 characters");
       }
 
-      console.log("Calling signup...");
-      const { user, error: signUpError } = await signup(email, password, name);
+      console.log("Calling authService.signUp...");
+      const { user, error: signUpError } = await authService.signUp(email, password);
       
       console.log("Signup result:", { user: user?.id, error: signUpError });
 
       if (signUpError) {
         console.error("Signup error:", signUpError);
-        throw signUpError;
+        throw new Error(signUpError.message || "Failed to sign up");
       }
 
       if (!user) {
         throw new Error("No user returned from signup");
       }
 
-      console.log("Signup successful, redirecting to onboarding...");
-      router.push("/onboarding");
+      console.log("Signup successful, setting success state...");
+      setSuccess(true);
     } catch (err) {
       console.error("Full signup error:", err);
       if (err instanceof Error) {
