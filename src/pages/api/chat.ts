@@ -2,15 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -23,8 +14,34 @@ export default async function handler(
     const { userId, conversationId, message } = req.body;
 
     if (!userId || !conversationId || !message) {
+      console.error("Missing required fields:", { userId, conversationId, message });
       return res.status(400).json({ error: "Missing required fields" });
     }
+
+    // Check for OpenAI API key
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not set in environment variables");
+      return res.status(500).json({ 
+        error: "OpenAI API key not configured. Please add OPENAI_API_KEY to .env.local" 
+      });
+    }
+
+    // Check for Supabase credentials
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Supabase credentials not set");
+      return res.status(500).json({ error: "Database configuration error" });
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    console.log("API call received:", { userId, conversationId, messageLength: message.length });
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase

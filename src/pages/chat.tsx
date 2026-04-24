@@ -100,6 +100,8 @@ export default function Chat() {
     setLoading(true);
 
     try {
+      console.log("Sending message:", { userId, conversationId, messageLength: userMessage.length });
+
       const optimisticUserMsg: Message = {
         id: `temp-${Date.now()}`,
         role: "user",
@@ -108,14 +110,44 @@ export default function Chat() {
       };
       setMessages((prev) => [...prev, optimisticUserMsg]);
 
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          conversationId,
+          message: userMessage,
+        }),
+      });
+
+      console.log("API response status:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("API error response:", errorData);
+        throw new Error(errorData.error || `API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("API response data:", data);
+
       await sendMessage(userId, conversationId, userMessage);
       
       const updated = await getConversationMessages(conversationId);
       setMessages(updated as Message[]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
-      const updated = await getConversationMessages(conversationId);
-      setMessages(updated as Message[]);
+      console.error("Send message error:", err);
+      setError(err instanceof Error ? err.message : "Failed to send message. Please check the console for details.");
+      
+      // Try to reload messages to show what was actually saved
+      try {
+        const updated = await getConversationMessages(conversationId);
+        setMessages(updated as Message[]);
+      } catch (reloadErr) {
+        console.error("Failed to reload messages:", reloadErr);
+      }
     } finally {
       setLoading(false);
     }
