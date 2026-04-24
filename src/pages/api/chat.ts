@@ -102,7 +102,7 @@ export default async function handler(
     const assistantMessage = completion.choices[0]?.message?.content || "";
 
     // Check if profile generation stage should advance
-    await updateProfileStage(profile, message, assistantMessage);
+    await updateProfileStage(supabase, profile, message, assistantMessage);
 
     // Save assistant message
     const { error: assistantMsgError } = await supabase
@@ -197,7 +197,7 @@ Once you have comprehensive answers to all categories, let them know you're read
   return systemPrompt;
 }
 
-async function updateProfileStage(profile: any, userMessage: string, assistantResponse: string) {
+async function updateProfileStage(supabase: any, profile: any, userMessage: string, assistantResponse: string) {
   const currentStage = profile.profile_generation_stage || "not_started";
   
   // Detect stage transitions
